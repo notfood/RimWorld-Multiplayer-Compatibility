@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -12,7 +12,8 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>
-    <DebugType></DebugType>
+    <DebugType>
+    </DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\Assemblies</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
@@ -31,15 +32,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
-      <HintPath>..\References\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0Harmony">
-      <HintPath>..\References\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\__LocalCopy_Multiplayer_-7-2\Assemblies\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp_public">
-      <HintPath>..\References\Assembly-CSharp_public.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Assembly-CSharp_public.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Multiplayer">
@@ -51,6 +52,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Mods\VanillaFishingExpanded.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="MpCompat.cs" />
     <Compile Include="Mods\AnimalLogic.cs" />
@@ -70,11 +72,7 @@
     <Compile Include="Mods\GiddyUpBattleMounts.cs" />
     <Compile Include="Mods\GeneticRim.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Mods\" />
-    <Folder Include="Mods_WIP\" />
-    <Folder Include="Mods_Promoted\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="Mods_Promoted\PowerLogic.cs" />
   </ItemGroup>
