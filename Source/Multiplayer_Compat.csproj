@@ -72,6 +72,7 @@
     <Compile Include="Mods\VanillaFishingExpanded.cs" />
     <Compile Include="Mods\VanillaFurnitureExpandedFarming.cs" />
     <Compile Include="Mods\MortarAccuracy.cs" />
+    <Compile Include="Mods\CentralizedClimateControl.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Mods\" />
