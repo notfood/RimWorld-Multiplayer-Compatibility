@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
@@ -137,6 +138,36 @@ namespace Multiplayer.Compat
                 MpCompat.harmony.Patch(method, transpiler: transpiler);
         }
 
+        /// <summary>Patches <see cref="Rand.Range(int x, int y)"> calls to <see cref="Rand.RangeSeeded(int x, int y, Find.TickManager.TicksAbs)"> calls.</summary>
+        /// <param name="method">Method that needs patching</param>
+        internal static void SeedVerseRand(string[] methods)
+        {
+            foreach (var method in methods)
+                SeedVerseRand(method);
+        }
+
+        /// <summary>Patches <see cref="Rand.Range(int x, int y)"> calls to <see cref="Rand.RangeSeeded(int x, int y, Find.TickManager.TicksAbs)"> calls.</summary>
+        /// <param name="method">Method that needs patching</param>
+        internal static void SeedVerseRand(MethodBase[] methods)
+        {
+            foreach (var method in methods)
+                SeedVerseRand(method);
+        }
+
+        /// <summary>Patches <see cref="Rand.Range(int x, int y)"> calls to <see cref="Rand.RangeSeeded(int x, int y, Find.TickManager.TicksAbs)"> calls.</summary>
+        /// <param name="method">Method that needs patching</param>
+        internal static void SeedVerseRand(string method)
+            => SeedVerseRand(AccessTools.Method(method));
+
+        /// <summary>Patches <see cref="Rand.Range(int x, int y)"> calls to <see cref="Rand.RangeSeeded(int x, int y, Find.TickManager.TicksAbs)"> calls.</summary>
+        /// <param name="method">Method that needs patching</param>
+        internal static void SeedVerseRand(MethodBase method)
+        {
+            var transpiler = new HarmonyMethod(typeof(PatchingUtilities), nameof(SeedVerseRNG));
+
+            MpCompat.harmony.Patch(method, transpiler: transpiler);
+        }
+
         #region System RNG transpiler
         private static readonly ConstructorInfo SystemRandConstructor = typeof(System.Random).GetConstructor(Array.Empty<Type>());
         private static readonly ConstructorInfo RandRedirectorConstructor = typeof(RandRedirector).GetConstructor(Array.Empty<Type>());
@@ -199,6 +230,58 @@ namespace Multiplayer.Compat
                         ci.operand = VerseRandomValue;
                     else if (method == UnityInsideUnitCircle)
                         ci.operand = VerseInsideUnitCircle;
+                }
+
+                yield return ci;
+            }
+        }
+        #endregion
+
+        #region Verse RNG Seeder Transpiler
+        private static readonly MethodInfo TickManagerGetter = AccessTools.PropertyGetter(typeof(Find), nameof(Find.TickManager));
+        private static readonly MethodInfo TicksAbsGetter = AccessTools.PropertyGetter(typeof(TickManager), nameof(TickManager.TicksAbs));
+
+        private static readonly MethodInfo VerseRandomChance = AccessTools.Method(typeof(Rand), nameof(Rand.Chance), new[] { typeof(float) });
+        private static readonly MethodInfo VerseRandomRangeInclusive = AccessTools.Method(typeof(Rand), nameof(Rand.RangeInclusive), new[] { typeof(int), typeof(int) });
+
+
+        private static readonly MethodInfo VerseRandomChanceSeeded = AccessTools.Method(typeof(Rand), nameof(Rand.ChanceSeeded), new[] { typeof(float), typeof(int) });
+        private static readonly MethodInfo VerseRandomRangeInclusiveSeeded = AccessTools.Method(typeof(Rand), nameof(Rand.RangeInclusiveSeeded), new[] { typeof(int), typeof(int), typeof(int) });
+        private static readonly MethodInfo VerseRandomRangeSeededFloat = AccessTools.Method(typeof(Rand), nameof(Rand.RangeSeeded), new[] { typeof(float), typeof(float), typeof(int) });
+        private static readonly MethodInfo VerseRandomRangeSeededInt = AccessTools.Method(typeof(Rand), nameof(Rand.RangeSeeded), new[] { typeof(int), typeof(int), typeof(int) });
+        private static readonly MethodInfo VerseRandomValueSeeded = AccessTools.Method(typeof(Rand), nameof(Rand.ValueSeeded), new[] { typeof(int) });
+        // private static readonly MethodInfo VerseRandomValue = AccessTools.PropertyGetter(typeof(Rand), nameof(Rand.Value));
+        // private static readonly MethodInfo VerseInsideUnitCircle = AccessTools.PropertyGetter(typeof(Rand), nameof(Rand.InsideUnitCircle));
+        internal static IEnumerable<CodeInstruction> SeedVerseRNG(IEnumerable<CodeInstruction> instr)
+        {
+            foreach (var ci in instr)
+            {
+                if (ci.opcode == OpCodes.Call && ci.operand is MethodInfo method)
+                {
+                    // Those are the methods that have a "Seeded" equivalent method in Verse.Rand.
+                    MethodInfo[] methods = { VerseRandomChance, VerseRandomRangeInclusive, VerseRandomRangeFloat, VerseRandomRangeInt, VerseRandomValue };
+                    // If we find a call to one of them, we first have to push the desired seed on the stack, as the last argument
+                    // to the "Seeded" method.
+                    // For now, it passes "Find.TickManager.TicksAbs". This could be changed, or parameterized if useful.
+                    if (methods.Contains(method))
+                    {
+                        //This method is static and without arguments : it only pushes the desired reference on the stack on return.
+                        yield return new CodeInstruction(OpCodes.Call, TickManagerGetter);
+                        //This method requires a this pointer : it is the result of the last call, and present on the stack.
+                        yield return new CodeInstruction(OpCodes.Call, TicksAbsGetter);
+                        // Now "Find.TickManager.TicksAbs" will be passed as last argument.
+                    }
+                    //All that remains to do is change the called method to the "Seeded" one.
+                    if (method == VerseRandomChance)
+                        ci.operand = VerseRandomChanceSeeded;
+                    if (method == VerseRandomRangeInclusive)
+                        ci.operand = VerseRandomRangeInclusiveSeeded;
+                    else if (method == VerseRandomRangeFloat)
+                        ci.operand = VerseRandomRangeSeededFloat;
+                    else if (method == VerseRandomRangeInt)
+                        ci.operand = VerseRandomRangeSeededInt;
+                    else if (method == VerseRandomValue)
+                        ci.operand = VerseRandomValueSeeded;
                 }
 
                 yield return ci;
